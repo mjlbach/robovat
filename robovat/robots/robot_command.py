@@ -14,10 +14,11 @@ class RobotCommand(object):
 
     def __init__(self,
                  component,
+                 component_type,
                  command_type,
                  arguments,
                  timeout=None,
-                 async=False):
+                 asynchronous=False):
         """Initialize.
 
         Args:
@@ -25,10 +26,11 @@ class RobotCommand(object):
             command_type: The type of the command to be executed.
             args: The arguments of the command.
             timeout: The maximal execution time.
-            async: If the command is asynchronous.
+            asynchronous: If the command is asynchronous.
             """
         self.component = component
+        self.component_type = component_type
         self.command_type = command_type
         self.arguments = arguments
         self.timeout = timeout
-        self.async = async
+        self.asynchronous = asynchronous

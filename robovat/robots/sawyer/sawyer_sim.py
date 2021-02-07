@@ -15,14 +15,15 @@ from robovat.utils.logging import logger
 class SawyerSim(sawyer.Sawyer):
     """Sawyer wrapper in simulation."""
 
-    ARM_NAME = 'sawyer_arm'
     BASE_NAME = 'sawyer_base'
+    ARM_NAME = 'sawyer_arm'
     HEAD_NAME = 'sawyer_head'
 
     def __init__(self,
                  simulator,
                  pose=[[0, 0, 0], [0, 0, 0]],
                  joint_positions=None,
+                 root_dir=None,
                  config=None):
         """Initialize.
 
@@ -32,7 +33,7 @@ class SawyerSim(sawyer.Sawyer):
             joint_positions: The list of initial joint positions.
             config: The configuartion as a dictionary.
         """
-        super(SawyerSim, self).__init__(config=config)
+        super(SawyerSim, self).__init__(config=config, root_dir=root_dir)
 
         self._simulator = simulator
 
@@ -62,10 +63,6 @@ class SawyerSim(sawyer.Sawyer):
         return self._base
 
     @property
-    def head(self):
-        return self._head
-
-    @property
     def l_finger_tip(self):
         return self._l_finger_tip
 
@@ -82,6 +79,14 @@ class SawyerSim(sawyer.Sawyer):
         return dict(
             (joint.name, joint.position) for joint in self._limb_joints
         )
+
+    @property
+    def finger_position(self):
+        l_value = (self._l_finger_joint.upper_limit -
+                   self._l_finger_joint.position) / self._l_finger_joint.range
+        r_value = (- self._r_finger_joint.lower_limit +
+                   self._r_finger_joint.position) / self._r_finger_joint.range
+        return 0.5 * (l_value + r_value)
 
     def reboot(self):
         """Reboot the robot.
@@ -180,8 +185,11 @@ class SawyerSim(sawyer.Sawyer):
             self.move_to_joint_positions(positions)
 
         if self._has_gripper:
-            # Start and open the gripper.
-            self.grip(0)
+            if self.config.OPEN_GRIPPER_WHEN_RESET:
+                self.grip(0)
+
+    def reset_targets(self):
+        self._arm.reset_targets()
 
     def move_to_joint_positions(self,
                                 positions,
@@ -214,6 +222,7 @@ class SawyerSim(sawyer.Sawyer):
 
         robot_command = RobotCommand(
             component=self._arm.name,
+            component_type='body',
             command_type='set_max_joint_velocities',
             arguments=kwargs)
 
@@ -228,6 +237,7 @@ class SawyerSim(sawyer.Sawyer):
 
         robot_command = RobotCommand(
             component=self._arm.name,
+            component_type='body',
             command_type='set_target_joint_positions',
             arguments=kwargs)
 
@@ -287,6 +297,7 @@ class SawyerSim(sawyer.Sawyer):
 
             robot_command = RobotCommand(
                 component=self._arm.name,
+                component_type='body',
                 command_type='set_max_joint_velocities',
                 arguments=kwargs)
 
@@ -302,6 +313,7 @@ class SawyerSim(sawyer.Sawyer):
 
             robot_command = RobotCommand(
                 component=self._arm.name,
+                component_type='body',
                 command_type='set_target_link_pose',
                 arguments=kwargs)
 
@@ -338,6 +350,7 @@ class SawyerSim(sawyer.Sawyer):
 
         robot_command = RobotCommand(
             component=self._arm.name,
+            component_type='body',
             command_type='set_max_joint_velocities',
             arguments=kwargs)
 
@@ -354,6 +367,7 @@ class SawyerSim(sawyer.Sawyer):
 
         robot_command = RobotCommand(
             component=self._arm.name,
+            component_type='body',
             command_type='set_target_link_poses',
             arguments=kwargs)
 
@@ -385,6 +399,7 @@ class SawyerSim(sawyer.Sawyer):
 
         robot_command = RobotCommand(
             component=self._arm.name,
+            component_type='body',
             command_type='set_target_joint_positions',
             arguments=kwargs)
 
